@@ -53,6 +53,7 @@ MQ.DEFAULT_CATALOGO = {
 
 MQ.DEFAULT_EMPRESA = {
   nombre: "Mi Mueblería",
+  logo: "",          // imagen en dataURL, ya reducida por MQ.procesarLogo
   rut: "",
   telefono: "",
   email: "",

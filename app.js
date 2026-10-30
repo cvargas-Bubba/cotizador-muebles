@@ -157,7 +157,9 @@
     const T = MQ.calc.totales(quote, cat, emp);
 
     $("brandName").textContent = emp.nombre || "Mi Mueblería";
-    $("sheetCompany").innerHTML = `<div class="sc-n">${esc(emp.nombre || "Mi Mueblería")}</div>` +
+    $("sheetCompany").innerHTML =
+      (emp.logo ? `<img class="sheet-logo" src="${esc(emp.logo)}" alt="${esc(emp.nombre || "Logo")}">` : "") +
+      `<div class="sc-n">${esc(emp.nombre || "Mi Mueblería")}</div>` +
       `<div class="sc-d">${esc([emp.rut && "RUT " + emp.rut, emp.telefono, emp.email].filter(Boolean).join(" · "))}</div>`;
     $("quoteNo").textContent = "N° " + (quote.numero || S.nextNumero());
     $("quoteDate").textContent = fechaCorta(quote.creado);
@@ -395,8 +397,17 @@
   }
 
   /* ================= EMPRESA ================= */
+  /* El logo se guarda al elegirlo, sin esperar al botón del formulario:
+     así el recuadro de arriba muestra siempre lo que quedó guardado. */
+  function pintarLogo() {
+    const src = S.empresa.logo;
+    $("eLogoPrev").innerHTML = src ? `<img src="${esc(src)}" alt="Logo de la empresa">` : "";
+    $("eLogoDel").hidden = !src;
+  }
+
   function pintarEmpresa() {
     const e = S.empresa;
+    pintarLogo();
     $("eNombre").value = e.nombre || ""; $("eRut").value = e.rut || "";
     $("eTelefono").value = e.telefono || ""; $("eEmail").value = e.email || "";
     $("eDireccion").value = e.direccion || ""; $("eIva").value = e.iva;
@@ -503,19 +514,21 @@
       MQ.toast("Cotización nueva");
     });
 
-    $("btnPdf").addEventListener("click", () => {
+    $("btnPdf").addEventListener("click", async () => {
       leerHoja();
       if (!quote.muebles.length) return MQ.toast("Agrega al menos un mueble.");
       if (!quote.numero) quote.numero = S.nextNumero();
-      MQ.pdf.descargarCotizacion(quote, S.catalogo, S.empresa);
+      try { await MQ.pdf.descargarCotizacion(quote, S.catalogo, S.empresa); }
+      catch (e) { MQ.toast("No se pudo generar el PDF."); console.warn(e); }
     });
 
     $("btnDespiece").addEventListener("click", () => { pintarDespiece(); $("despieceDlg").showModal(); });
     $("despClose").addEventListener("click", () => $("despieceDlg").close());
-    $("despPdf").addEventListener("click", () => {
+    $("despPdf").addEventListener("click", async () => {
       if (!quote.muebles.length) return MQ.toast("Agrega al menos un mueble.");
       if (!quote.numero) quote.numero = S.nextNumero();
-      MQ.pdf.descargarDespiece(quote, S.catalogo, S.empresa);
+      try { await MQ.pdf.descargarDespiece(quote, S.catalogo, S.empresa); }
+      catch (e) { MQ.toast("No se pudo generar el PDF."); console.warn(e); }
     });
 
     $("btnShare").addEventListener("click", async () => {
@@ -636,10 +649,32 @@
       MQ.toast("Valores de referencia restaurados");
     });
 
+    /* logo */
+    $("eLogoFile").addEventListener("change", async (ev) => {
+      const file = ev.target.files && ev.target.files[0];
+      ev.target.value = "";   // para poder volver a elegir el mismo archivo
+      if (!file) return;
+      try {
+        const logo = await MQ.procesarLogo(file);
+        S.saveEmpresa(Object.assign(MQ.clone(S.empresa), { logo }));
+        pintarLogo();
+        MQ.toast("Logo guardado");
+      } catch (e) {
+        MQ.toast((e && e.message) || "No se pudo usar esa imagen.");
+      }
+    });
+    $("eLogoDel").addEventListener("click", () => {
+      if (!confirm("¿Quitar el logo de la empresa?")) return;
+      S.saveEmpresa(Object.assign(MQ.clone(S.empresa), { logo: "" }));
+      pintarLogo();
+      MQ.toast("Logo quitado");
+    });
+
     /* empresa */
     $("empresaForm").addEventListener("submit", (ev) => {
       ev.preventDefault();
       S.saveEmpresa({
+        logo: S.empresa.logo,   // el formulario no lo trae: se guarda aparte
         nombre: $("eNombre").value.trim(), rut: $("eRut").value.trim(),
         telefono: $("eTelefono").value.trim(), email: $("eEmail").value.trim(),
         direccion: $("eDireccion").value.trim(),

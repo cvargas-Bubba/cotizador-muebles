@@ -75,13 +75,27 @@ MQ.pdf = (function () {
     return new jsPDF({ unit: "mm", format: "a4" });
   }
 
+  /* Logo ya convertido a PNG, mientras se arma un documento. Lo deja puesto
+     descargarCotizacion / descargarDespiece, que son las que pueden esperar. */
+  let logoPdf = null;
+  const ALTO_LOGO = 14, ANCHO_LOGO = 50;
+
   function hoja(doc, empresa, titulo, numero, estado) {
+    let x = M;
+    if (logoPdf) {
+      const ratio = logoPdf.w / logoPdf.h;
+      let h = ALTO_LOGO, w = h * ratio;
+      if (w > ANCHO_LOGO) { w = ANCHO_LOGO; h = w / ratio; }
+      /* el alias hace que las páginas compartan una sola copia de la imagen */
+      doc.addImage(logoPdf.data, "PNG", M, M - 1, w, h, "logo", "SLOW");
+      x = M + w + 6;
+    }
     doc.setTextColor.apply(doc, NEGRO);
     doc.setFont("helvetica", "bold").setFontSize(15);
-    doc.text(empresa.nombre || "Mueblería", M, M + 4);
+    doc.text(empresa.nombre || "Mueblería", x, M + 4);
     doc.setFont("helvetica", "normal").setFontSize(8.5).setTextColor.apply(doc, GRIS);
     const datos = [empresa.rut && "RUT " + empresa.rut, empresa.direccion, empresa.telefono, empresa.email].filter(Boolean);
-    doc.text(datos.join("  ·  "), M, M + 9.5);
+    doc.text(datos.join("  ·  "), x, M + 9.5);
 
     doc.setFont("helvetica", "bold").setFontSize(10.5).setTextColor.apply(doc, NEGRO);
     doc.text(titulo, ANCHO - M, M + 4, { align: "right" });
@@ -336,12 +350,21 @@ MQ.pdf = (function () {
     [base, "N" + (quote.numero || 0), (cliente || "").trim().replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, "").replace(/\s+/g, "_")]
       .filter(Boolean).join("_") + ".pdf";
 
+  /* El logo puede venir en SVG, así que convertirlo pasa por el navegador y
+     hay que esperarlo antes de armar el documento. */
+  async function conLogo(empresa, armar) {
+    logoPdf = await MQ.logoParaPdf(empresa.logo);
+    try { return armar(); } finally { logoPdf = null; }
+  }
+
   return {
-    descargarCotizacion(quote, cat, empresa) {
-      cotizacion(quote, cat, empresa).save(nombreArchivo("Cotizacion", quote, (quote.cliente || {}).nombre));
+    async descargarCotizacion(quote, cat, empresa) {
+      const doc = await conLogo(empresa, () => cotizacion(quote, cat, empresa));
+      doc.save(nombreArchivo("Cotizacion", quote, (quote.cliente || {}).nombre));
     },
-    descargarDespiece(quote, cat, empresa) {
-      despiece(quote, cat, empresa).save(nombreArchivo("Despiece", quote, (quote.cliente || {}).nombre));
+    async descargarDespiece(quote, cat, empresa) {
+      const doc = await conLogo(empresa, () => despiece(quote, cat, empresa));
+      doc.save(nombreArchivo("Despiece", quote, (quote.cliente || {}).nombre));
     }
   };
 })();

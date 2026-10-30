@@ -16,8 +16,11 @@ con despiece y lista de compra. Funciona en el navegador, sin servidor ni instal
   con el porcentaje de desperdicio aplicado.
 - **Catálogo editable.** Tableros, cantos, herrajes, mano de obra, desperdicio,
   gastos generales y margen se editan en la app y quedan guardados.
-- **PDF de cotización y de despiece**, con los datos de tu empresa y tus
-  condiciones comerciales.
+- **PDF de cotización y de despiece**, con tu logo, los datos de tu empresa y
+  tus condiciones comerciales.
+- **Logo propio.** Se sube en Empresa (PNG, JPG, SVG o WebP), se reduce solo
+  para no ocupar espacio de más y aparece en la hoja de cotización y en el
+  encabezado de cada página de los PDF.
 - **Hoja de esquemas.** El PDF de la cotización termina con el dibujo de cada
   mueble, acotado y con la medida de corte escrita en cada puerta y cajón.
 - **Croquis.** Un dibujo propio por cotización, hecho con líneas, rectángulos,
@@ -66,6 +69,7 @@ python -m http.server 8000
 | `calc.js` | despiece, herrajes y costeo |
 | `draw.js` | esquema frontal del mueble, como lista de formas |
 | `croquis.js` | editor de croquis y su figura para el PDF |
+| `logo.js` | carga del logo, reducción y conversión para jsPDF |
 | `store.js` | persistencia en `localStorage` |
 | `pdf.js` | PDF de cotización y de despiece (jsPDF) |
 | `app.js` | interfaz y eventos |

@@ -296,6 +296,18 @@
   </div>
   <form class="panel" id="empresaForm">
     <div class="panel-b">
+      <div class="logo-row">
+        <div class="logo-prev" id="eLogoPrev" data-vacio="Sin logo"></div>
+        <div class="logo-acc">
+          <span class="h-label">Logo</span>
+          <p class="hint">Aparece arriba en la cotización y en los PDF. PNG, JPG, SVG o WebP; se reduce solo para que no ocupe espacio de más.</p>
+          <div class="logo-btns">
+            <label class="btn btn-sm" for="eLogoFile">Elegir imagen</label>
+            <input type="file" id="eLogoFile" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden>
+            <button type="button" class="btn btn-ghost btn-sm" id="eLogoDel" hidden>Quitar</button>
+          </div>
+        </div>
+      </div>
       <div class="company-grid">
         <div class="field"><label for="eNombre">Nombre de la mueblería</label><input class="input" id="eNombre" required></div>
         <div class="field"><label for="eRut">RUT</label><input class="input" id="eRut"></div>
@@ -339,6 +351,7 @@
 <script src="calc.js"></script>
 <script src="draw.js"></script>
 <script src="croquis.js"></script>
+<script src="logo.js"></script>
 <script src="store.js"></script>
 <script src="pdf.js"></script>
 <script src="app.js"></script>

@@ -312,6 +312,23 @@ img, svg { max-width: 100%; }
 .tbl .cell { padding: 7px 10px; font-size: 13.5px; }
 .w40 { width: 40px; } .w70 { width: 80px; } .w80 { width: 90px; } .w110 { width: 120px; }
 
+/* ---------- logo de la empresa ---------- */
+.logo-row {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--linea);
+}
+.logo-prev {
+  width: 180px; height: 92px; flex: none; display: flex; align-items: center; justify-content: center;
+  background: #fff; border: 1px solid var(--linea); border-radius: 10px; padding: 10px;
+}
+.logo-prev:empty::after { content: attr(data-vacio); color: #9a8d84; font-size: 12.5px; }
+.logo-prev img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.logo-acc { flex: 1 1 260px; display: grid; gap: 6px; }
+.logo-acc .hint { margin: 0; max-width: 56ch; }
+.logo-btns { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.logo-btns label.btn { display: inline-flex; align-items: center; cursor: pointer; }
+.sheet-logo { max-width: 180px; max-height: 54px; object-fit: contain; display: block; margin-bottom: 7px; }
+
 .params-grid, .company-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
 .company-grid .full { grid-column: 1 / -1; }
 
