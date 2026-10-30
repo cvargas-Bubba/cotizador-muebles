@@ -8,6 +8,7 @@
   let quote = null;      // cotización en edición
   let actual = null;     // mueble en el configurador
   let editando = null;   // id del mueble que se está editando, o null
+  let croquis = null;    // editor de croquis, montado al arrancar
 
   MQ.toast = function (msg) {
     const t = $("toast");
@@ -23,7 +24,7 @@
     return {
       id: MQ.uid(), numero: 0, estado: "borrador", creado: new Date().toISOString(),
       cliente: { nombre: "", rut: "", telefono: "", email: "", obra: "" },
-      muebles: [], descuento: 0, notas: ""
+      muebles: [], descuento: 0, notas: "", croquis: MQ.croquis.nuevo()
     };
   }
 
@@ -209,6 +210,14 @@
     quote.estado = $("qEstado").value;
   }
 
+  /* una cotización guardada con una versión anterior no trae croquis */
+  function volcarCroquis() {
+    if (!quote.croquis) quote.croquis = MQ.croquis.nuevo();
+    if (!quote.croquis.objetos) quote.croquis.objetos = [];
+    $("crEscala").value = quote.croquis.escala;
+    if (croquis) croquis.pintar();
+  }
+
   function volcarHoja() {
     const c = quote.cliente || {};
     $("cNombre").value = c.nombre || ""; $("cRut").value = c.rut || "";
@@ -217,6 +226,7 @@
     $("qDescuento").value = quote.descuento || 0;
     $("qNotas").value = quote.notas || "";
     $("qEstado").value = quote.estado || "borrador";
+    volcarCroquis();
   }
 
   /* ================= DESPIECE ================= */
@@ -397,6 +407,7 @@
   function verVista(v) {
     document.querySelectorAll(".view").forEach((el) => { el.hidden = el.id !== "view-" + v; });
     document.querySelectorAll(".tab").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === v)));
+    if (v === "croquis") volcarCroquis();
     if (v === "historial") pintarHistorial();
     if (v === "materiales") pintarCatalogo();
     if (v === "empresa") pintarEmpresa();
@@ -523,6 +534,30 @@
 
     $("mbGo").addEventListener("click", () => document.querySelector(".quote-col").scrollIntoView({ behavior: "smooth" }));
 
+    /* croquis */
+    croquis = MQ.croquis.montar($("crLienzo"), () => quote.croquis, () => S.saveDraft(quote));
+    document.querySelectorAll(".tool").forEach((b) => b.addEventListener("click", () => {
+      document.querySelectorAll(".tool").forEach((x) => x.classList.toggle("on", x === b));
+      croquis.herramienta(b.dataset.tool);
+    }));
+    $("crEscala").addEventListener("input", () => {
+      quote.croquis.escala = Math.max(1, Math.round(MQ.num($("crEscala").value, 100)));
+      croquis.pintar(); S.saveDraft(quote);
+    });
+    $("crSnap").addEventListener("change", () => croquis.ajuste($("crSnap").checked));
+    $("crUndo").addEventListener("click", () => { if (!croquis.deshacer()) MQ.toast("No hay nada que deshacer."); });
+    $("crDel").addEventListener("click", () => { if (!croquis.borrar()) MQ.toast("Selecciona algo del croquis para borrarlo."); });
+    $("crClear").addEventListener("click", () => {
+      if (MQ.croquis.vacio(quote.croquis)) return MQ.toast("El croquis ya está vacío.");
+      if (confirm("¿Borrar todo el croquis? Se puede deshacer una vez.")) croquis.limpiar();
+    });
+    document.addEventListener("keydown", (ev) => {
+      if ($("view-croquis").hidden) return;
+      const enCampo = /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName);
+      if (!enCampo && (ev.key === "Delete" || ev.key === "Backspace")) { ev.preventDefault(); croquis.borrar(); }
+      if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "z") { ev.preventDefault(); croquis.deshacer(); }
+    });
+
     /* historial */
     $("histSearch").addEventListener("input", pintarHistorial);
     $("histFilter").addEventListener("change", pintarHistorial);
@@ -620,6 +655,7 @@
     pintarTipos(); volcarFormulario();
     volcarHoja();
     conectar();
+    volcarCroquis();
     pintarConfigurador(); pintarHoja();
     verVista("cotizar");
   }

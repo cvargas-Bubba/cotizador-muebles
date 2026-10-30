@@ -22,9 +22,11 @@ MQ.pdf = (function () {
     zocalo: { relleno: [228, 222, 214], borde: [150, 140, 132], grosor: 0.3 },
     tir: { relleno: [176, 134, 66] },
     barra: { borde: [110, 100, 92], grosor: 0.7 },
-    cota: { borde: [150, 140, 132], grosor: 0.25 }
+    cota: { borde: [150, 140, 132], grosor: 0.25 },
+    /* trazos del croquis */
+    trazo: { relleno: null, borde: [40, 38, 36], grosor: 0.55 }
   };
-  const FUENTE = { dm: 6.5, dl: 7, dmf: 6 };
+  const FUENTE = { dm: 6.5, dl: 7, dmf: 6, rotulo: 8.5 };
 
   /* Dibuja la figura con su esquina superior izquierda en (ox, oy),
      escalada a `ancho` mm. Devuelve el alto que ocupó, en mm. */
@@ -48,7 +50,7 @@ MQ.pdf = (function () {
         doc.circle(X(f.cx), Y(f.cy), Math.max(0.5, f.r * s), "F");
       } else if (f.t === "texto") {
         doc.setFont("helvetica", "normal").setFontSize(FUENTE[f.clase] || 6.5);
-        doc.setTextColor.apply(doc, f.clase === "dmf" ? [90, 70, 45] : GRIS);
+        doc.setTextColor.apply(doc, f.clase === "dmf" ? [90, 70, 45] : f.clase === "rotulo" ? NEGRO : GRIS);
         const op = { align: f.anclaje === "fin" ? "right" : "center" };
         if (f.rot) op.angle = -f.rot;
         doc.text(f.s, X(f.x), Y(f.y), op);
@@ -221,7 +223,8 @@ MQ.pdf = (function () {
 
   function esquemas(doc, quote, cat, empresa) {
     const muebles = quote.muebles || [];
-    if (!muebles.length) return;
+    const hayCroquis = !MQ.croquis.vacio(quote.croquis);
+    if (!muebles.length && !hayCroquis) return;
     const titulo = "ESQUEMAS";
     doc.addPage();
     let y = hoja(doc, empresa, titulo, quote.numero);
@@ -243,6 +246,17 @@ MQ.pdf = (function () {
       dibujarFigura(doc, fig, M, y + 8, ANCHO_DIB);
       y += alto + 16;
     });
+
+    if (!hayCroquis) return;
+    const fig = MQ.croquis.figura(quote.croquis);
+    const ancho = ANCHO - M * 2;
+    const alto = fig.h * (ancho / fig.w);
+    if (y + alto + 14 > ALTO - 20) { doc.addPage(); y = hoja(doc, empresa, titulo, quote.numero); }
+    doc.setFont("helvetica", "bold").setFontSize(10).setTextColor.apply(doc, NEGRO);
+    doc.text("Croquis", M, y);
+    doc.setFont("helvetica", "normal").setFontSize(8.5).setTextColor.apply(doc, GRIS);
+    doc.text("Un cuadro de la grilla equivale a " + quote.croquis.escala + " mm.", M + 20, y);
+    dibujarFigura(doc, fig, M, y + 6, ancho);
   }
 
   /* ---------- despiece y lista de compra ---------- */

@@ -101,7 +101,7 @@ MQ.draw = (function () {
   }
 
   /* ---------- salida para la pantalla ---------- */
-  function svg(fig) {
+  function svg(fig, etiqueta) {
     const p = fig.formas.map((f) => {
       const n = (v) => (+v).toFixed(1);
       if (f.t === "rect") return `<rect x="${n(f.x)}" y="${n(f.y)}" width="${n(f.w)}" height="${n(f.h)}" class="${f.clase}"/>`;
@@ -111,7 +111,7 @@ MQ.draw = (function () {
       const rot = f.rot ? ` transform="rotate(${f.rot} ${n(f.x)} ${n(f.y)})"` : "";
       return `<text x="${n(f.x)}" y="${n(f.y)}" class="${cls}"${rot}>${esc(f.s)}</text>`;
     }).join("");
-    return `<svg viewBox="0 0 ${fig.w} ${fig.h}" role="img" aria-label="Esquema frontal del mueble">${p}</svg>`;
+    return `<svg viewBox="0 0 ${fig.w} ${fig.h}" role="img" aria-label="${esc(etiqueta || "Esquema frontal del mueble")}">${p}</svg>`;
   }
 
   return { figura, svg, esquema: (m, cat) => svg(figura(m, cat)) };

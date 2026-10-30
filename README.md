@@ -20,6 +20,11 @@ con despiece y lista de compra. Funciona en el navegador, sin servidor ni instal
   condiciones comerciales.
 - **Hoja de esquemas.** El PDF de la cotización termina con el dibujo de cada
   mueble, acotado y con la medida de corte escrita en cada puerta y cajón.
+- **Croquis.** Un dibujo propio por cotización, hecho con líneas, rectángulos,
+  rótulos y cotas sobre una grilla con ajuste automático. Las cotas calculan
+  solas su medida a partir de la escala que definas para la grilla. Se guarda
+  como vectores, no como imagen, así que pesa unos pocos KB y sale nítido en
+  el PDF.
 - **Historial** de cotizaciones, para reabrir, duplicar y seguir su estado.
 
 ## Cómo calcula el precio
@@ -57,7 +62,8 @@ python -m http.server 8000
 |---|---|
 | `data.js` | catálogo de referencia, tipos de mueble y utilidades |
 | `calc.js` | despiece, herrajes y costeo |
-| `draw.js` | esquema frontal en SVG |
+| `draw.js` | esquema frontal del mueble, como lista de formas |
+| `croquis.js` | editor de croquis y su figura para el PDF |
 | `store.js` | persistencia en `localStorage` |
 | `pdf.js` | PDF de cotización y de despiece (jsPDF) |
 | `app.js` | interfaz y eventos |

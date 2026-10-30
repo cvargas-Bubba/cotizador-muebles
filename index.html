@@ -22,6 +22,7 @@
     </div>
     <nav class="tabs" role="tablist" aria-label="Secciones">
       <button class="tab" role="tab" data-view="cotizar" aria-selected="true">Cotizar</button>
+      <button class="tab" role="tab" data-view="croquis" aria-selected="false">Croquis</button>
       <button class="tab" role="tab" data-view="historial" aria-selected="false">Historial</button>
       <button class="tab" role="tab" data-view="materiales" aria-selected="false">Materiales</button>
       <button class="tab" role="tab" data-view="empresa" aria-selected="false">Empresa</button>
@@ -169,6 +170,44 @@
   <button class="btn btn-primary" id="mbGo">Ver cotización</button>
 </div>
 
+<!-- ============ CROQUIS ============ -->
+<main class="view" id="view-croquis" hidden>
+  <div class="settings-intro">
+    <div>
+      <h1 class="h-big">Croquis de la cotización</h1>
+      <p>Un dibujo acotado que acompaña a la cotización y sale en el PDF, después de los esquemas. Se guarda junto con la cotización.</p>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-h">
+      <div class="tools" role="group" aria-label="Herramienta">
+        <button type="button" class="tool on" data-tool="sel" title="Seleccionar y mover">Seleccionar</button>
+        <button type="button" class="tool" data-tool="linea" title="Línea recta">Línea</button>
+        <button type="button" class="tool" data-tool="rect" title="Rectángulo">Rectángulo</button>
+        <button type="button" class="tool" data-tool="texto" title="Rótulo de texto">Texto</button>
+        <button type="button" class="tool" data-tool="cota" title="Cota con medida">Cota</button>
+      </div>
+      <div class="tools-right">
+        <button class="btn btn-ghost btn-sm" id="crUndo">Deshacer</button>
+        <button class="btn btn-ghost btn-sm" id="crDel">Borrar</button>
+        <button class="btn btn-ghost btn-sm" id="crClear">Limpiar</button>
+      </div>
+    </div>
+    <div class="panel-b">
+      <div class="croquis-opts">
+        <div class="field inline">
+          <label for="crEscala">Un cuadro de la grilla mide</label>
+          <div class="unit" data-unit="mm"><input class="input" id="crEscala" inputmode="numeric" value="100"></div>
+        </div>
+        <label class="check"><input type="checkbox" id="crSnap" checked><span>Ajustar a la grilla</span></label>
+        <span class="hint" id="crAyuda">Las cotas calculan su medida con esa escala.</span>
+      </div>
+      <div class="croquis-lienzo" id="crLienzo"></div>
+    </div>
+  </section>
+</main>
+
 <!-- ============ HISTORIAL ============ -->
 <main class="view" id="view-historial" hidden>
   <div class="settings-intro">
@@ -296,6 +335,7 @@
 <script src="data.js"></script>
 <script src="calc.js"></script>
 <script src="draw.js"></script>
+<script src="croquis.js"></script>
 <script src="store.js"></script>
 <script src="pdf.js"></script>
 <script src="app.js"></script>
