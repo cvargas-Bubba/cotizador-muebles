@@ -3,7 +3,7 @@
 Cotizador de muebles a medida: se ingresan las medidas y el mueble se cotiza solo,
 con despiece y lista de compra. Funciona en el navegador, sin servidor ni instalación.
 
-👉 **https://cvargas-bubba.github.io/cotizador-muebles/**
+👉 **https://muebles.cvargas.org**
 
 ## Qué hace
 
