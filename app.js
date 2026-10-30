@@ -62,6 +62,7 @@
     $("fMatFrente").innerHTML = opts(actual.mat.frente);
     $("fMatTrasera").innerHTML = opts(actual.mat.trasera);
     $("fMatCajon").innerHTML = opts(actual.mat.cajon);
+    $("fMatCubierta").innerHTML = opts(MQ.calc.matCubierta(actual));
   }
 
   /* El mueble manda: el formulario muestra solo lo que el tipo usa */
@@ -85,7 +86,9 @@
     document.querySelectorAll("[data-parte]").forEach((el) => {
       const p = el.getAttribute("data-parte");
       if (p === "alto") el.hidden = actual.tipo === "cubierta";
-      else if (p === "frente") el.hidden = false;
+      else if (p === "frente") el.hidden = actual.tipo === "cubierta";
+      /* el tablero de cubierta se elige en el mesón y en los muebles que la llevan */
+      else if (p === "matcubierta") el.hidden = actual.tipo !== "cubierta" && t.partes.indexOf("cubierta") < 0;
       else el.hidden = t.partes.indexOf(p) < 0;
     });
     $("fMatCuerpo").closest(".field").hidden = actual.tipo === "cubierta";
@@ -98,8 +101,16 @@
     const ent = (v, min, max) => Math.min(max, Math.max(min, Math.round(MQ.num(v, min))));
     actual.nombre = $("fNombre").value.trim();
     actual.ancho = ent($("fAncho").value, 50, 6000);
-    actual.alto = actual.tipo === "cubierta" ? MQ.tipo("cubierta").def.alto : ent($("fAlto").value, 50, 3000);
     actual.prof = ent($("fProf").value, 50, 1200);
+    actual.mat = {
+      cuerpo: $("fMatCuerpo").value, frente: $("fMatFrente").value,
+      trasera: $("fMatTrasera").value, cajon: $("fMatCajon").value,
+      cubierta: $("fMatCubierta").value
+    };
+    /* en un mesón el alto no se escribe: es el espesor del tablero elegido */
+    actual.alto = actual.tipo === "cubierta"
+      ? MQ.calc.tablero(S.catalogo, actual.mat.cubierta).espesor
+      : ent($("fAlto").value, 50, 3000);
     actual.puertas = usa("puertas") ? ent($("fPuertas").value, 0, 8) : 0;
     actual.cajones = usa("cajones") ? ent($("fCajones").value, 0, 10) : 0;
     actual.entrepanos = usa("entrepanos") ? ent($("fEntrepanos").value, 0, 12) : 0;
@@ -110,10 +121,6 @@
     actual.barra = usa("barra") && $("fBarra").checked;
     actual.instalar = $("fInstalar").checked;
     actual.cantidad = ent($("fCantidad").value, 1, 99);
-    actual.mat = {
-      cuerpo: $("fMatCuerpo").value, frente: $("fMatFrente").value,
-      trasera: $("fMatTrasera").value, cajon: $("fMatCajon").value
-    };
   }
 
   function pintarConfigurador() {
@@ -296,6 +303,20 @@
     return l.join("\n");
   }
 
+  /* ---------- WhatsApp ----------
+     Normaliza un teléfono chileno al formato internacional que pide wa.me.
+     Devuelve "" si no parece un número utilizable, y en ese caso WhatsApp
+     abre sin destinatario para que elijas el contacto a mano. */
+  function telefonoWhats(tel) {
+    const d = String(tel || "").replace(/\D/g, "");
+    if (!d) return "";
+    if (d.startsWith("56")) return d.length >= 11 ? d : "";
+    if (d.length === 9 && d.startsWith("9")) return "56" + d;   // celular
+    if (d.length === 8) return "569" + d;                       // sin el 9
+    if (d.length === 9) return "56" + d;                        // fijo con código
+    return d.length >= 10 ? d : "";
+  }
+
   /* ================= HISTORIAL ================= */
   function pintarHistorial() {
     const q = ($("histSearch").value || "").toLowerCase().trim();
@@ -341,6 +362,7 @@
       <td class="w80">${inp(t.ancho, "ancho", i, 'inputmode="numeric"')}</td>
       <td class="w110">${inp(t.precio, "precio", i, 'inputmode="numeric"')}</td>
       <td class="mono small num">${MQ.clp(MQ.calc.precioM2(cat, t.id))}</td>
+      <td class="w40"><input type="checkbox" class="cell-check" data-macizo="${i}"${t.macizo ? " checked" : ""} aria-label="Canto a la vista, sin tapacanto"></td>
       <td class="w40"><button class="icon" data-del-tab="${i}" title="Quitar tablero" aria-label="Quitar tablero">✕</button></td>
     </tr>`).join("");
 
@@ -379,6 +401,10 @@
       const i = +el.dataset.i, campo = el.dataset.campo;
       if (!cat.cantos[i]) return;
       cat.cantos[i][campo] = campo === "nombre" ? el.value.trim() : Math.max(0, MQ.num(el.value, 0));
+    });
+    $("tblTableros").querySelectorAll("[data-macizo]").forEach((el) => {
+      const t = cat.tableros[+el.dataset.macizo];
+      if (t) t.macizo = el.checked;
     });
     $("tblHerrajes").querySelectorAll("[data-herraje]").forEach((el) => {
       cat.herrajes[el.dataset.herraje].precio = Math.max(0, MQ.num(el.value, 0));
@@ -437,7 +463,7 @@
 
     ["fNombre", "fAncho", "fAlto", "fProf", "fPuertas", "fCajones", "fEntrepanos",
      "fCajonCol", "fTrasera", "fZocalo", "fCubierta", "fBarra", "fInstalar", "fCantidad",
-     "fMatCuerpo", "fMatFrente", "fMatTrasera", "fMatCajon"].forEach((id) => {
+     "fMatCuerpo", "fMatFrente", "fMatTrasera", "fMatCajon", "fMatCubierta"].forEach((id) => {
       $(id).addEventListener("input", refrescarConfig);
       $(id).addEventListener("change", refrescarConfig);
     });
@@ -544,6 +570,19 @@
       }
     });
     $("shareClose").addEventListener("click", () => $("shareDlg").close());
+
+    $("btnWhats").addEventListener("click", () => {
+      leerHoja();
+      if (!quote.muebles.length) return MQ.toast("Agrega al menos un mueble.");
+      if (!quote.numero) quote.numero = S.nextNumero();
+      const tel = telefonoWhats(quote.cliente.telefono);
+      const texto = encodeURIComponent(resumenTexto());
+      /* WhatsApp solo recibe texto por enlace: el PDF se adjunta a mano */
+      window.open(tel ? `https://wa.me/${tel}?text=${texto}` : `https://wa.me/?text=${texto}`, "_blank", "noopener");
+      MQ.toast(tel
+        ? "WhatsApp abierto con el resumen. El PDF se adjunta aparte."
+        : "Sin teléfono del cliente: elige el contacto en WhatsApp.");
+    });
 
     $("mbGo").addEventListener("click", () => document.querySelector(".quote-col").scrollIntoView({ behavior: "smooth" }));
 

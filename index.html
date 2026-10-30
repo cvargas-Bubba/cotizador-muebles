@@ -71,6 +71,7 @@
             <div class="field" data-parte="frente"><label for="fMatFrente">Frentes y cubiertas</label><select class="select" id="fMatFrente"></select></div>
             <div class="field" data-parte="trasera"><label for="fMatTrasera">Trasera y pisos de cajón</label><select class="select" id="fMatTrasera"></select></div>
             <div class="field" data-parte="cajones"><label for="fMatCajon">Caja del cajón</label><select class="select" id="fMatCajon"></select></div>
+            <div class="field" data-parte="matcubierta"><label for="fMatCubierta">Cubierta</label><select class="select" id="fMatCubierta"></select></div>
           </div>
 
           <figure class="drawing">
@@ -156,6 +157,7 @@
         <button class="btn btn-primary" id="btnSave">Guardar cotización</button>
         <button class="btn" id="btnPdf">PDF cotización</button>
         <button class="btn" id="btnDespiece">Ver despiece</button>
+        <button class="btn" id="btnWhats">Enviar por WhatsApp</button>
         <button class="btn" id="btnShare">Copiar resumen</button>
       </div>
     </aside>
@@ -248,9 +250,9 @@
   <section class="panel">
     <div class="panel-h"><h2 class="h-label">Tableros</h2><button class="btn btn-ghost btn-sm" id="addTablero">Agregar tablero</button></div>
     <div class="panel-b">
-      <p class="hint">El precio es por plancha entera. El costo de cada pieza se prorratea por superficie.</p>
+      <p class="hint">El precio es por plancha entera. El costo de cada pieza se prorratea por superficie. Marca <strong>macizo</strong> en los tableros cuyo canto queda a la vista: a esos no se les cuenta tapacanto.</p>
       <div class="tbl-wrap"><table class="tbl" id="tblTableros"><thead><tr>
-        <th>Nombre</th><th>Espesor</th><th>Largo</th><th>Ancho</th><th>Precio plancha</th><th>$/m²</th><th></th>
+        <th>Nombre</th><th>Espesor</th><th>Largo</th><th>Ancho</th><th>Precio plancha</th><th>$/m²</th><th>Macizo</th><th></th>
       </tr></thead><tbody></tbody></table></div>
     </div>
   </section>

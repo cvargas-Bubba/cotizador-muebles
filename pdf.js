@@ -188,7 +188,7 @@ MQ.pdf = (function () {
       const cuerpo = nom(m.mat.cuerpo), frente = nom(m.mat.frente);
       /* la cubierta es una sola pieza: solo tiene sentido nombrar su tablero */
       const mat = m.tipo === "cubierta"
-        ? (frente ? "Tablero " + frente : "")
+        ? ((nom(MQ.calc.matCubierta(m)) || frente) ? "Tablero " + (nom(MQ.calc.matCubierta(m)) || frente) : "")
         : (cuerpo ? "Cuerpo " + cuerpo + (frente && frente !== cuerpo ? " · frentes " + frente : "") : "");
       const sub = [d, mat].filter(Boolean).join(". ");
       if (sub) {

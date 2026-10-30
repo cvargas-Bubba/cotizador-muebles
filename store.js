@@ -15,7 +15,20 @@ MQ.store = (function () {
     const d = MQ.clone(MQ.DEFAULT_CATALOGO);
     if (!c) return d;
     const out = MQ.clone(d);
-    if (Array.isArray(c.tableros) && c.tableros.length) out.tableros = MQ.clone(c.tableros);
+    if (Array.isArray(c.tableros) && c.tableros.length) {
+      out.tableros = MQ.clone(c.tableros);
+      /* Un tablero que la app agrega después se incorpora a los catálogos que
+         ya estaban guardados, pero una sola vez: `incorporados` recuerda
+         cuáles se ofrecieron, para no reponer los que el usuario borró. */
+      out.incorporados = (c.incorporados || []).slice();
+      d.tableros.forEach((t) => {
+        if (out.incorporados.indexOf(t.id) >= 0) return;
+        out.incorporados.push(t.id);
+        if (!out.tableros.some((x) => x.id === t.id)) out.tableros.push(MQ.clone(t));
+      });
+    } else {
+      out.incorporados = d.tableros.map((t) => t.id);
+    }
     if (Array.isArray(c.cantos) && c.cantos.length) out.cantos = MQ.clone(c.cantos);
     ["herrajes", "mano"].forEach((g) => {
       Object.keys(out[g]).forEach((k) => {

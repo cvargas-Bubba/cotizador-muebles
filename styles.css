@@ -310,6 +310,7 @@ img, svg { max-width: 100%; }
 .tbl th.num { text-align: right; }
 .tbl td { padding: 5px 8px; border-bottom: 1px solid color-mix(in srgb, var(--linea) 55%, transparent); vertical-align: middle; }
 .tbl .cell { padding: 7px 10px; font-size: 13.5px; }
+.tbl .cell-check { accent-color: var(--acento); width: 16px; height: 16px; margin: 0; }
 .w40 { width: 40px; } .w70 { width: 80px; } .w80 { width: 90px; } .w110 { width: 120px; }
 
 /* ---------- logo de la empresa ---------- */

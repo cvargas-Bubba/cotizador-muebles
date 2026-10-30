@@ -19,7 +19,10 @@ MQ.DEFAULT_CATALOGO = {
     { id: "mel15b", nombre: "Melamina blanca 15 mm", espesor: 15, largo: 2500, ancho: 1830, precio: 34900 },
     { id: "mdf18", nombre: "MDF crudo 18 mm", espesor: 18, largo: 2500, ancho: 1830, precio: 32900 },
     { id: "ter15", nombre: "Terciado 15 mm", espesor: 15, largo: 2440, ancho: 1220, precio: 28900 },
-    { id: "tras3", nombre: "Trasera melamina 3 mm", espesor: 3, largo: 2500, ancho: 1830, precio: 12900 }
+    { id: "tras3", nombre: "Trasera melamina 3 mm", espesor: 3, largo: 2500, ancho: 1830, precio: 12900 },
+    /* Macizo: el canto queda a la vista, se lija y se termina, no se tapa */
+    { id: "mad50", nombre: "Madera maciza 50 mm", espesor: 50, largo: 2400, ancho: 650, precio: 135000, macizo: true },
+    { id: "mad30", nombre: "Madera maciza 30 mm", espesor: 30, largo: 2400, ancho: 650, precio: 89000, macizo: true }
   ],
   /* Cantos: precio por metro lineal instalado */
   cantos: [
@@ -94,15 +97,18 @@ MQ.TIPOS = [
   },
   {
     id: "cubierta", nombre: "Cubierta / mesón", descripcion: "Solo el tablero horizontal",
+    /* el alto no se escribe: es el espesor del tablero que se elija */
     partes: [],
-    def: { ancho: 2000, alto: 18, prof: 600, puertas: 0, cajones: 0, entrepanos: 0, trasera: false, zocalo: false, cubierta: false, barra: false }
+    def: { ancho: 2000, alto: 50, prof: 600, puertas: 0, cajones: 0, entrepanos: 0, trasera: false, zocalo: false, cubierta: false, barra: false }
   }
 ];
 
 MQ.tipo = (id) => MQ.TIPOS.find((t) => t.id === id) || MQ.TIPOS[0];
 
 /* Materiales con que parte un mueble nuevo */
-MQ.DEFAULT_MATERIALES = { cuerpo: "mel18b", frente: "mel18m", trasera: "tras3", cajon: "mel15b" };
+/* La cubierta tiene material propio: suele ser madera maciza mucho más
+   gruesa que los frentes, así que compartirlos daba despieces irreales. */
+MQ.DEFAULT_MATERIALES = { cuerpo: "mel18b", frente: "mel18m", trasera: "tras3", cajon: "mel15b", cubierta: "mad50" };
 
 MQ.nuevoMueble = function (tipoId) {
   const t = MQ.tipo(tipoId || "base");

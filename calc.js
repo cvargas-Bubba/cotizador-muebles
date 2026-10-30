@@ -10,6 +10,9 @@ MQ.calc = (function () {
   const REBAJE_CAJA = 60;   // la caja del cajón es más angosta y baja que el frente
 
   const tablero = (cat, id) => cat.tableros.find((t) => t.id === id) || cat.tableros[0];
+  /* las cotizaciones guardadas antes de separar el material de cubierta
+     no traen esa clave: en ellas la cubierta salía del tablero de frentes */
+  const matCubierta = (m) => m.mat.cubierta || m.mat.frente;
   const canto = (cat, id) => cat.cantos.find((c) => c.id === id) || cat.cantos[0];
 
   /* precio por m² prorrateado desde la plancha entera */
@@ -64,14 +67,17 @@ MQ.calc = (function () {
     /* cant: unidades · largo/ancho: mm · cl/ca: cuántos bordes se cantean a lo largo y a lo ancho */
     const add = (nombre, cant, largo, ancho, mat, cantoId, cl, ca) => {
       if (cant <= 0 || largo <= 0 || ancho <= 0) return;
+      /* un tablero macizo lleva el canto a la vista: se lija y se termina,
+         no se le pega tapacanto */
+      const canteable = cantoId && !tablero(cat, mat).macizo;
       out.push({
         nombre, cant: Math.round(cant), largo: Math.round(largo), ancho: Math.round(ancho),
-        mat, canto: cantoId || null, cl: cl || 0, ca: ca || 0
+        mat, canto: canteable ? cantoId : null, cl: canteable ? (cl || 0) : 0, ca: canteable ? (ca || 0) : 0
       });
     };
 
     if (m.tipo === "cubierta") {
-      add("Cubierta", 1, A, P, m.mat.frente, "grueso", 1, 2);
+      add("Cubierta", 1, A, P, matCubierta(m), "grueso", 1, 2);
       return out;
     }
 
@@ -83,7 +89,7 @@ MQ.calc = (function () {
     if (usa("entrepanos")) add("Entrepaño", Math.max(0, Math.round(m.entrepanos)), A - 2 * e, P - RETIRO_ENTREP, m.mat.cuerpo, "fino", 1, 0);
     if (usa("trasera") && m.trasera) add("Trasera", 1, H, A, m.mat.trasera, null, 0, 0);
     if (usa("zocalo") && m.zocalo) add("Zócalo", 1, A, ALTO_ZOCALO, m.mat.cuerpo, "fino", 1, 0);
-    if (usa("cubierta") && m.cubierta) add("Cubierta", 1, A, P + 20, m.mat.frente, "grueso", 1, 2);
+    if (usa("cubierta") && m.cubierta) add("Cubierta", 1, A, P + 20, matCubierta(m), "grueso", 1, 2);
 
     /* los cajones en columna propia necesitan un separador vertical */
     if (colCaj) add("Separador vertical", 1, H - 2 * e, P, m.mat.cuerpo, "fino", 1, 0);
@@ -228,5 +234,5 @@ MQ.calc = (function () {
     };
   }
 
-  return { piezas, herrajes, costear, totales, listaCompra, precioM2, geometria, ALTO_ZOCALO };
+  return { piezas, herrajes, costear, totales, listaCompra, precioM2, geometria, matCubierta, tablero, ALTO_ZOCALO };
 })();

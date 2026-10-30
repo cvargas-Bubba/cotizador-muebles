@@ -15,7 +15,15 @@ con despiece y lista de compra. Funciona en el navegador, sin servidor ni instal
 - **Lista de compra.** Planchas, metros de canto y herrajes de toda la cotización,
   con el porcentaje de desperdicio aplicado.
 - **Catálogo editable.** Tableros, cantos, herrajes, mano de obra, desperdicio,
-  gastos generales y margen se editan en la app y quedan guardados.
+  gastos generales y margen se editan en la app y quedan guardados. Los
+  tableros marcados como **macizos** no llevan tapacanto: el canto queda a la
+  vista, se lija y se termina.
+- **Cubiertas de madera.** La cubierta tiene tablero propio, aparte del de los
+  frentes, porque suele ser mucho más gruesa. En un mesón el alto no se
+  escribe: es el espesor del tablero que elijas.
+- **Envío por WhatsApp.** Abre el chat del cliente con el resumen de la
+  cotización escrito. El PDF se adjunta aparte: WhatsApp no recibe archivos
+  por enlace.
 - **PDF de cotización y de despiece**, con tu logo, los datos de tu empresa y
   tus condiciones comerciales.
 - **Logo propio.** Se sube en Empresa (PNG, JPG, SVG o WebP), se reduce solo
