@@ -13,6 +13,52 @@ MQ.pdf = (function () {
     return d.toLocaleDateString("es-CL", { day: "2-digit", month: "2-digit", year: "numeric" });
   };
 
+  /* Paleta del esquema sobre papel blanco: la de la pantalla es oscura y
+     sobre blanco no se vería. Las clases son las que emite MQ.draw.figura. */
+  const TRAZO = {
+    cuerpo: { relleno: [250, 248, 245], borde: [110, 100, 92], grosor: 0.5 },
+    frente: { relleno: [238, 228, 214], borde: [160, 125, 75], grosor: 0.4 },
+    entrepano: { relleno: [170, 160, 152], borde: null },
+    zocalo: { relleno: [228, 222, 214], borde: [150, 140, 132], grosor: 0.3 },
+    tir: { relleno: [176, 134, 66] },
+    barra: { borde: [110, 100, 92], grosor: 0.7 },
+    cota: { borde: [150, 140, 132], grosor: 0.25 }
+  };
+  const FUENTE = { dm: 6.5, dl: 7, dmf: 6 };
+
+  /* Dibuja la figura con su esquina superior izquierda en (ox, oy),
+     escalada a `ancho` mm. Devuelve el alto que ocupó, en mm. */
+  function dibujarFigura(doc, fig, ox, oy, ancho) {
+    const s = ancho / fig.w;
+    const X = (v) => ox + v * s, Y = (v) => oy + v * s;
+
+    fig.formas.forEach((f) => {
+      const e = TRAZO[f.clase] || {};
+      if (f.t === "rect") {
+        if (e.relleno) doc.setFillColor.apply(doc, e.relleno);
+        if (e.borde) { doc.setDrawColor.apply(doc, e.borde); doc.setLineWidth(e.grosor); }
+        const modo = e.relleno && e.borde ? "FD" : e.relleno ? "F" : "S";
+        doc.rect(X(f.x), Y(f.y), f.w * s, f.h * s, modo);
+      } else if (f.t === "linea") {
+        doc.setDrawColor.apply(doc, e.borde || GRIS);
+        doc.setLineWidth(e.grosor || 0.3);
+        doc.line(X(f.x1), Y(f.y1), X(f.x2), Y(f.y2));
+      } else if (f.t === "circulo") {
+        doc.setFillColor.apply(doc, e.relleno || GRIS);
+        doc.circle(X(f.cx), Y(f.cy), Math.max(0.5, f.r * s), "F");
+      } else if (f.t === "texto") {
+        doc.setFont("helvetica", "normal").setFontSize(FUENTE[f.clase] || 6.5);
+        doc.setTextColor.apply(doc, f.clase === "dmf" ? [90, 70, 45] : GRIS);
+        const op = { align: f.anclaje === "fin" ? "right" : "center" };
+        if (f.rot) op.angle = -f.rot;
+        doc.text(f.s, X(f.x), Y(f.y), op);
+      }
+    });
+
+    doc.setLineWidth(0.3);
+    return fig.h * s;
+  }
+
   function nuevo() {
     const { jsPDF } = window.jspdf;
     return new jsPDF({ unit: "mm", format: "a4" });
@@ -165,8 +211,38 @@ MQ.pdf = (function () {
       doc.text("Valores netos en pesos. Cotización válida por " + empresa.validez + " días.", M, y);
     }
 
+    esquemas(doc, quote, cat, empresa);
     pie(doc);
     return doc;
+  }
+
+  /* ---------- hoja de esquemas ---------- */
+  const ANCHO_DIB = 108;
+
+  function esquemas(doc, quote, cat, empresa) {
+    const muebles = quote.muebles || [];
+    if (!muebles.length) return;
+    const titulo = "ESQUEMAS";
+    doc.addPage();
+    let y = hoja(doc, empresa, titulo, quote.numero);
+    doc.setFont("helvetica", "normal").setFontSize(8.5).setTextColor.apply(doc, GRIS);
+    doc.text("Medidas en mm. Las de cada puerta y cajón son de corte, ya con la luz entre frentes descontada.", M, y);
+    y += 9;
+
+    muebles.forEach((m, i) => {
+      const fig = MQ.draw.figura(m, cat);
+      const alto = fig.h * (ANCHO_DIB / fig.w);
+      if (y + alto + 14 > ALTO - 20) { doc.addPage(); y = hoja(doc, empresa, titulo, quote.numero); }
+
+      doc.setFont("helvetica", "bold").setFontSize(10).setTextColor.apply(doc, NEGRO);
+      doc.text(String(i + 1) + ". " + (m.nombre || MQ.tipo(m.tipo).nombre), M, y);
+      doc.setFont("helvetica", "normal").setFontSize(8.5).setTextColor.apply(doc, GRIS);
+      const sub = [medidas(m), m.cantidad > 1 ? m.cantidad + " unidades" : "", descripcion(m)].filter(Boolean).join("  ·  ");
+      doc.text(doc.splitTextToSize(sub, ANCHO_DIB + 50)[0], M, y + 4.5);
+
+      dibujarFigura(doc, fig, M, y + 8, ANCHO_DIB);
+      y += alto + 16;
+    });
   }
 
   /* ---------- despiece y lista de compra ---------- */

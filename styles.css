@@ -165,6 +165,7 @@ img, svg { max-width: 100%; }
 .drawing svg .dm { fill: var(--suave); font: 500 10.5px var(--mono); text-anchor: middle; }
 .drawing svg .dm.der { text-anchor: end; }
 .drawing svg .dl { fill: var(--suave); font: 500 11px var(--sans); text-anchor: middle; }
+.drawing svg .dmf { fill: #EBD9C2; font: 500 9.5px var(--mono); text-anchor: middle; }
 .measures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin: 0; background: var(--linea); border-top: 1px solid var(--linea); }
 .measures > div { background: var(--bg2); padding: 9px 12px; }
 .measures dt { font: 600 10px/1 var(--cond); letter-spacing: 1.2px; text-transform: uppercase; color: var(--tenue); }

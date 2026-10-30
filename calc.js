@@ -43,10 +43,14 @@ MQ.calc = (function () {
     const cols = Math.max(1, nPuertas + (colCaj ? 1 : 0));
     const anchoCol = Math.max(1, m.ancho) / cols;
     const zonaCajones = colCaj ? 0 : nCaj * hCaj;
+    const anchoCaj = colCaj ? anchoCol : Math.max(1, m.ancho);
     return {
-      e, nCaj, nPuertas, hCaj, colCaj, cols, anchoCol, zonaCajones,
-      anchoCaj: colCaj ? anchoCol : Math.max(1, m.ancho),
-      altoPuerta: Math.max(1, m.alto) - zonaCajones - HOLGURA
+      e, nCaj, nPuertas, hCaj, colCaj, cols, anchoCol, zonaCajones, anchoCaj,
+      altoPuerta: Math.max(1, m.alto) - zonaCajones - HOLGURA,
+      /* medidas de corte de los frentes, para acotarlos en el esquema */
+      anchoPuerta: anchoCol - HOLGURA,
+      anchoFrenteCajon: anchoCaj - HOLGURA,
+      altoFrenteCajon: hCaj - HOLGURA
     };
   }
 
@@ -71,8 +75,7 @@ MQ.calc = (function () {
       return out;
     }
 
-    const g = geometria(m, cat);
-    const { nCaj, hCaj, nPuertas, anchoCol, anchoCaj, colCaj, altoPuerta } = g;
+    const { nCaj, hCaj, nPuertas, anchoCol, anchoCaj, colCaj, altoPuerta } = geometria(m, cat);
 
     /* caja */
     add("Costado", 2, H, P, m.mat.cuerpo, "fino", 1, 0);

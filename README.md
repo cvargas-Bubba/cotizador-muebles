@@ -18,6 +18,8 @@ con despiece y lista de compra. Funciona en el navegador, sin servidor ni instal
   gastos generales y margen se editan en la app y quedan guardados.
 - **PDF de cotización y de despiece**, con los datos de tu empresa y tus
   condiciones comerciales.
+- **Hoja de esquemas.** El PDF de la cotización termina con el dibujo de cada
+  mueble, acotado y con la medida de corte escrita en cada puerta y cajón.
 - **Historial** de cotizaciones, para reabrir, duplicar y seguir su estado.
 
 ## Cómo calcula el precio
