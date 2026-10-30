@@ -83,6 +83,18 @@
             <dl class="measures" id="resumenPiezas"></dl>
           </figure>
         </div>
+
+        <section class="lineales" aria-labelledby="linTitle">
+          <div class="lineales-h">
+            <span class="h-label" id="linTitle">Madera y perfiles</span>
+            <div class="lineales-btns">
+              <button type="button" class="btn btn-ghost btn-sm" data-add-lineal="madera">Agregar madera</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-add-lineal="perfil">Agregar perfil</button>
+            </div>
+          </div>
+          <p class="hint" id="linAyuda">Piezas que compras por metro: escuadría, largo de cada pieza y cuántas van.</p>
+          <div id="lineales"></div>
+        </section>
       </div>
 
       <div class="line-total">
@@ -253,6 +265,26 @@
       <p class="hint">El precio es por plancha entera. El costo de cada pieza se prorratea por superficie. Marca <strong>macizo</strong> en los tableros cuyo canto queda a la vista: a esos no se les cuenta tapacanto.</p>
       <div class="tbl-wrap"><table class="tbl" id="tblTableros"><thead><tr>
         <th>Nombre</th><th>Espesor</th><th>Largo</th><th>Ancho</th><th>Precio plancha</th><th>$/m²</th><th>Macizo</th><th></th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-h"><h2 class="h-label">Madera dimensionada</h2><button class="btn btn-ghost btn-sm" id="addEscuadria">Agregar escuadría</button></div>
+    <div class="panel-b">
+      <p class="hint">Seca y cepillada, con el espesor y el ancho en pulgadas. El precio es por metro lineal: en cada mueble anotas el largo y cuántas piezas van.</p>
+      <div class="tbl-wrap"><table class="tbl" id="tblEscuadrias"><thead><tr>
+        <th>Madera</th><th>Espesor</th><th>Ancho</th><th>Precio por metro</th><th></th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-h"><h2 class="h-label">Perfiles de fierro</h2><button class="btn btn-ghost btn-sm" id="addPerfil">Agregar perfil</button></div>
+    <div class="panel-b">
+      <p class="hint">También por metro lineal.</p>
+      <div class="tbl-wrap"><table class="tbl" id="tblPerfiles"><thead><tr>
+        <th>Perfil</th><th>Precio por metro</th><th></th>
       </tr></thead><tbody></tbody></table></div>
     </div>
   </section>

@@ -93,6 +93,8 @@
     });
     $("fMatCuerpo").closest(".field").hidden = actual.tipo === "cubierta";
     pintarSelectsMaterial();
+    if (!actual.lineales) actual.lineales = [];
+    pintarLineales();
   }
 
   function leerFormulario() {
@@ -121,6 +123,7 @@
     actual.barra = usa("barra") && $("fBarra").checked;
     actual.instalar = $("fInstalar").checked;
     actual.cantidad = ent($("fCantidad").value, 1, 99);
+    leerLineales();
   }
 
   function pintarConfigurador() {
@@ -140,12 +143,64 @@
 
     const d = c.costos;
     $("desglose").innerHTML = [
-      ["Tableros", d.tableros], ["Cantos", d.cantos], ["Herrajes", d.herrajes],
-      ["Mano de obra", d.mano], ["Gastos y margen", d.gastos + d.margen]
+      ["Tableros", d.tableros], ["Madera y perfiles", d.lineales], ["Cantos", d.cantos],
+      ["Herrajes", d.herrajes], ["Mano de obra", d.mano], ["Gastos y margen", d.gastos + d.margen]
     ].filter(([, v]) => v > 0).map(([k, v]) => `<span>${k} <b class="mono">${MQ.clp(v)}</b></span>`).join("");
+
+    /* el total de cada fila se actualiza sin rehacerla, para no perder el
+       foco mientras se escribe el largo o la cantidad */
+    c.lineales.forEach((l, i) => {
+      const el = $("lineales").querySelector(`[data-m="${i}"]`);
+      if (el) el.textContent = l.metros.toFixed(2).replace(".", ",") + " m · " + MQ.clp(l.total);
+    });
+    $("linAyuda").textContent = c.cubiertaDeMadera
+      ? "La cubierta se arma con estas piezas: no se cobra tablero."
+      : "Piezas que compras por metro: escuadría, largo de cada pieza y cuántas van.";
+    $("linAyuda").classList.toggle("aviso", !!c.cubiertaDeMadera);
 
     $("addItem").textContent = editando ? "Guardar cambios" : "Agregar a la cotización";
     $("cancelEdit").hidden = !editando;
+  }
+
+  /* ---------- madera y perfiles ---------- */
+  function opcionesLineal(clase, sel) {
+    const lista = clase === "perfil" ? (S.catalogo.perfiles || []) : (S.catalogo.escuadrias || []);
+    return lista.map((x) => {
+      const n = clase === "perfil" ? x.nombre : MQ.calc.nombreEscuadria(x);
+      return `<option value="${esc(x.id)}"${x.id === sel ? " selected" : ""}>${esc(n)}</option>`;
+    }).join("");
+  }
+
+  function pintarLineales() {
+    const ls = actual.lineales || [];
+    $("lineales").innerHTML = ls.length ? ls.map((l, i) => `
+      <div class="lineal">
+        <span class="lineal-k">${l.clase === "perfil" ? "Perfil" : "Madera"}</span>
+        <select class="select" data-campo="matId" data-i="${i}" aria-label="Material">${opcionesLineal(l.clase, l.matId)}</select>
+        <div class="unit" data-unit="mm"><input class="input" data-campo="largo" data-i="${i}" inputmode="numeric" value="${esc(l.largo)}" aria-label="Largo de cada pieza"></div>
+        <div class="unit" data-unit="pzas"><input class="input" data-campo="cant" data-i="${i}" inputmode="numeric" value="${esc(l.cant)}" aria-label="Cantidad de piezas"></div>
+        <span class="lineal-m mono" data-m="${i}"></span>
+        <button class="icon" data-del-lineal="${i}" title="Quitar pieza" aria-label="Quitar pieza">✕</button>
+      </div>`).join("") : `<p class="hint lineal-vacio">Todavía no hay piezas de madera ni perfiles.</p>`;
+  }
+
+  function leerLineales() {
+    const ls = actual.lineales || [];
+    $("lineales").querySelectorAll("[data-campo]").forEach((el) => {
+      const l = ls[+el.dataset.i];
+      if (!l) return;
+      if (el.dataset.campo === "matId") l.matId = el.value;
+      else if (el.dataset.campo === "largo") l.largo = Math.min(12000, Math.max(0, Math.round(MQ.num(el.value, 0))));
+      else l.cant = Math.min(999, Math.max(0, Math.round(MQ.num(el.value, 0))));
+    });
+  }
+
+  function agregarLineal(clase) {
+    const lista = clase === "perfil" ? (S.catalogo.perfiles || []) : (S.catalogo.escuadrias || []);
+    if (!lista.length) return MQ.toast("Primero agrega " + (clase === "perfil" ? "un perfil" : "una escuadría") + " en Materiales.");
+    actual.lineales = actual.lineales || [];
+    actual.lineales.push({ id: MQ.uid(), clase, matId: lista[0].id, largo: actual.ancho, cant: 1 });
+    pintarLineales(); pintarConfigurador();
   }
 
   function refrescarConfig() { leerFormulario(); pintarConfigurador(); }
@@ -257,16 +312,30 @@
         <td class="small">${esc(nom(p.mat))}</td>
         <td class="small">${p.canto ? esc([p.cl ? p.cl + "× largo" : "", p.ca ? p.ca + "× ancho" : ""].filter(Boolean).join(" + ")) : "—"}</td>
       </tr>`).join("");
+      const lin = c.lineales.map((l) => `<tr>
+        <td>${esc(l.nombre)}</td>
+        <td class="mono num">${l.cant * n}</td>
+        <td class="mono num">${l.largo}</td>
+        <td class="small">${l.clase === "perfil" ? "Perfil de fierro" : "Madera dimensionada"}</td>
+        <td class="mono num">${(l.metros * n).toFixed(2).replace(".", ",")} m</td>
+      </tr>`).join("");
+
       return `<h3 class="desp-h">${i + 1}. ${esc(m.nombre || MQ.tipo(m.tipo).nombre)}
           <span class="mono">${esc(medidas(m))}${n > 1 ? " · " + n + " un." : ""}</span></h3>
-        <div class="tbl-wrap"><table class="tbl"><thead><tr>
+        ${filas ? `<div class="tbl-wrap"><table class="tbl"><thead><tr>
           <th>Pieza</th><th class="num">Cant.</th><th class="num">Largo</th><th class="num">Ancho</th><th>Tablero</th><th>Cantos</th>
-        </tr></thead><tbody>${filas}</tbody></table></div>`;
+        </tr></thead><tbody>${filas}</tbody></table></div>` : ""}
+        ${lin ? `<div class="tbl-wrap"><table class="tbl"><thead><tr>
+          <th>Madera y perfiles</th><th class="num">Piezas</th><th class="num">Largo</th><th>Tipo</th><th class="num">Total</th>
+        </tr></thead><tbody>${lin}</tbody></table></div>` : ""}
+        ${c.cubiertaDeMadera ? `<p class="hint">La cubierta se arma con estas piezas: no lleva tablero.</p>` : ""}`;
     }).join("");
 
     const L = MQ.calc.listaCompra(quote, cat);
     const compra = [
       ...L.tableros.map((t) => [t.nombre, t.planchasEnteras + (t.planchasEnteras === 1 ? " plancha" : " planchas"), t.m2.toFixed(2) + " m²"]),
+      ...L.maderas.map((l) => [l.nombre, Math.ceil(l.metros) + " m", l.piezas + (l.piezas === 1 ? " pieza" : " piezas")]),
+      ...L.perfiles.map((l) => [l.nombre, Math.ceil(l.metros) + " m", l.piezas + (l.piezas === 1 ? " pieza" : " piezas")]),
       ...L.cantos.map((c) => [c.nombre, Math.ceil(c.ml) + " m", ""]),
       ...L.herrajes.map((h) => [h.nombre, Math.ceil(h.cant) + " " + h.unidad, ""])
     ].map(([a, b, d]) => `<tr><td>${esc(a)}</td><td class="mono num">${esc(b)}</td><td class="small num">${esc(d)}</td></tr>`).join("");
@@ -366,6 +435,20 @@
       <td class="w40"><button class="icon" data-del-tab="${i}" title="Quitar tablero" aria-label="Quitar tablero">✕</button></td>
     </tr>`).join("");
 
+    $("tblEscuadrias").querySelector("tbody").innerHTML = (cat.escuadrias || []).map((e, i) => `<tr>
+      <td>${inp(e.nombre, "nombre", i)}</td>
+      <td class="w70"><div class="unit" data-unit="&quot;">${inp(e.esp, "esp", i, 'inputmode="decimal"')}</div></td>
+      <td class="w70"><div class="unit" data-unit="&quot;">${inp(e.anc, "anc", i, 'inputmode="decimal"')}</div></td>
+      <td class="w110">${inp(e.precio, "precio", i, 'inputmode="numeric"')}</td>
+      <td class="w40"><button class="icon" data-del-esc="${i}" title="Quitar escuadría" aria-label="Quitar escuadría">✕</button></td>
+    </tr>`).join("");
+
+    $("tblPerfiles").querySelector("tbody").innerHTML = (cat.perfiles || []).map((p, i) => `<tr>
+      <td>${inp(p.nombre, "nombre", i)}</td>
+      <td class="w110">${inp(p.precio, "precio", i, 'inputmode="numeric"')}</td>
+      <td class="w40"><button class="icon" data-del-per="${i}" title="Quitar perfil" aria-label="Quitar perfil">✕</button></td>
+    </tr>`).join("");
+
     $("tblCantos").querySelector("tbody").innerHTML = cat.cantos.map((c, i) => `<tr>
       <td>${inp(c.nombre, "nombre", i)}</td>
       <td class="w110">${inp(c.precio, "precio", i, 'inputmode="numeric"')}</td>
@@ -402,6 +485,16 @@
       if (!cat.cantos[i]) return;
       cat.cantos[i][campo] = campo === "nombre" ? el.value.trim() : Math.max(0, MQ.num(el.value, 0));
     });
+    tbody("tblEscuadrias").forEach((el) => {
+      const i = +el.dataset.i, campo = el.dataset.campo;
+      if (!cat.escuadrias[i]) return;
+      cat.escuadrias[i][campo] = campo === "nombre" ? el.value.trim() : Math.max(0, MQ.num(el.value, 0));
+    });
+    tbody("tblPerfiles").forEach((el) => {
+      const i = +el.dataset.i, campo = el.dataset.campo;
+      if (!cat.perfiles[i]) return;
+      cat.perfiles[i][campo] = campo === "nombre" ? el.value.trim() : Math.max(0, MQ.num(el.value, 0));
+    });
     $("tblTableros").querySelectorAll("[data-macizo]").forEach((el) => {
       const t = cat.tableros[+el.dataset.macizo];
       if (t) t.macizo = el.checked;
@@ -419,6 +512,9 @@
       redondeo: Math.max(1, MQ.num($("pRedondeo").value, 1))
     };
     cat.tableros = cat.tableros.filter((t) => t.nombre);
+    /* una escuadría se identifica por sus pulgadas, el nombre es opcional */
+    cat.escuadrias = cat.escuadrias.filter((e) => e.anc > 0 && e.esp > 0);
+    cat.perfiles = cat.perfiles.filter((p) => p.nombre);
     return cat;
   }
 
@@ -466,6 +562,19 @@
      "fMatCuerpo", "fMatFrente", "fMatTrasera", "fMatCajon", "fMatCubierta"].forEach((id) => {
       $(id).addEventListener("input", refrescarConfig);
       $(id).addEventListener("change", refrescarConfig);
+    });
+
+    /* madera y perfiles del mueble */
+    document.querySelectorAll("[data-add-lineal]").forEach((b) =>
+      b.addEventListener("click", () => agregarLineal(b.dataset.addLineal)));
+    $("lineales").addEventListener("input", refrescarConfig);
+    $("lineales").addEventListener("change", refrescarConfig);
+    $("lineales").addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-del-lineal]");
+      if (!b) return;
+      leerLineales();
+      actual.lineales.splice(+b.dataset.delLineal, 1);
+      pintarLineales(); pintarConfigurador();
     });
 
     $("qtyMinus").addEventListener("click", () => { $("fCantidad").value = Math.max(1, MQ.num($("fCantidad").value, 1) - 1); refrescarConfig(); });
@@ -571,17 +680,48 @@
     });
     $("shareClose").addEventListener("click", () => $("shareDlg").close());
 
-    $("btnWhats").addEventListener("click", () => {
+    /* Enviar por WhatsApp.
+       En el celular el PDF se entrega a la hoja de compartir del sistema y
+       llega adjunto. En el navegador de escritorio esa API no acepta
+       archivos, así que se descarga el PDF y se abre el chat con el texto
+       para adjuntarlo a mano. */
+    function abrirChat(texto) {
+      const tel = telefonoWhats(quote.cliente.telefono);
+      const t = encodeURIComponent(texto);
+      window.open(tel ? `https://wa.me/${tel}?text=${t}` : `https://wa.me/?text=${t}`, "_blank", "noopener");
+      return tel;
+    }
+
+    $("btnWhats").addEventListener("click", async () => {
       leerHoja();
       if (!quote.muebles.length) return MQ.toast("Agrega al menos un mueble.");
       if (!quote.numero) quote.numero = S.nextNumero();
-      const tel = telefonoWhats(quote.cliente.telefono);
-      const texto = encodeURIComponent(resumenTexto());
-      /* WhatsApp solo recibe texto por enlace: el PDF se adjunta a mano */
-      window.open(tel ? `https://wa.me/${tel}?text=${texto}` : `https://wa.me/?text=${texto}`, "_blank", "noopener");
-      MQ.toast(tel
-        ? "WhatsApp abierto con el resumen. El PDF se adjunta aparte."
-        : "Sin teléfono del cliente: elige el contacto en WhatsApp.");
+      const texto = resumenTexto();
+
+      let archivo = null;
+      try {
+        const pdf = await MQ.pdf.archivoCotizacion(quote, S.catalogo, S.empresa);
+        archivo = { pdf, file: new File([pdf.blob], pdf.nombre, { type: "application/pdf" }) };
+      } catch (e) {
+        console.warn("pdf", e);
+      }
+
+      if (archivo && navigator.canShare && navigator.canShare({ files: [archivo.file] })) {
+        try {
+          await navigator.share({ files: [archivo.file], text: texto });
+          return MQ.toast("Elige WhatsApp para enviar la cotización con el PDF.");
+        } catch (e) {
+          /* el usuario canceló: no hay nada que avisar ni que reintentar */
+          if (e && e.name === "AbortError") return;
+          console.warn("share", e);
+        }
+      }
+
+      if (archivo) archivo.pdf.guardar();
+      const tel = abrirChat(texto);
+      MQ.toast(archivo
+        ? "PDF descargado. Adjúntalo en el chat con el clip."
+        : tel ? "WhatsApp abierto con el resumen." : "Elige el contacto en WhatsApp.");
     });
 
     $("mbGo").addEventListener("click", () => document.querySelector(".quote-col").scrollIntoView({ behavior: "smooth" }));
@@ -675,6 +815,32 @@
     $("addTablero").addEventListener("click", () => {
       const cat = leerCatalogo();
       cat.tableros.push({ id: "t" + MQ.uid(), nombre: "Tablero nuevo", espesor: 18, largo: 2500, ancho: 1830, precio: 0 });
+      S.catalogo = cat; pintarCatalogo();
+    });
+
+    /* madera dimensionada y perfiles */
+    $("tblEscuadrias").addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-del-esc]");
+      if (!b) return;
+      const cat = leerCatalogo();
+      cat.escuadrias.splice(+b.dataset.delEsc, 1);
+      S.catalogo = cat; pintarCatalogo();
+    });
+    $("addEscuadria").addEventListener("click", () => {
+      const cat = leerCatalogo();
+      cat.escuadrias.push({ id: "e" + MQ.uid(), nombre: "", esp: 2, anc: 4, precio: 0 });
+      S.catalogo = cat; pintarCatalogo();
+    });
+    $("tblPerfiles").addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-del-per]");
+      if (!b) return;
+      const cat = leerCatalogo();
+      cat.perfiles.splice(+b.dataset.delPer, 1);
+      S.catalogo = cat; pintarCatalogo();
+    });
+    $("addPerfil").addEventListener("click", () => {
+      const cat = leerCatalogo();
+      cat.perfiles.push({ id: "p" + MQ.uid(), nombre: "Perfil nuevo", precio: 0 });
       S.catalogo = cat; pintarCatalogo();
     });
     $("catSave").addEventListener("click", () => {

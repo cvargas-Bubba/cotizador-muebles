@@ -21,9 +21,16 @@ con despiece y lista de compra. Funciona en el navegador, sin servidor ni instal
 - **Cubiertas de madera.** La cubierta tiene tablero propio, aparte del de los
   frentes, porque suele ser mucho más gruesa. En un mesón el alto no se
   escribe: es el espesor del tablero que elijas.
-- **Envío por WhatsApp.** Abre el chat del cliente con el resumen de la
-  cotización escrito. El PDF se adjunta aparte: WhatsApp no recibe archivos
-  por enlace.
+- **Madera dimensionada y perfiles de fierro.** Si el tablero lo armas tú, en
+  cada mueble anotas las piezas que vas a ocupar: escuadría, largo y cuántas
+  van. Se cobran por metro lineal según la escuadría, y en cuanto hay una
+  pieza de madera **la cubierta deja de cobrarse como tablero**, porque la
+  estás fabricando, no comprando. La superficie sí sigue sumando mano de
+  obra: hay que cepillarla, encolarla y lijarla.
+- **Envío por WhatsApp.** En el celular entrega el PDF a la hoja de compartir
+  del sistema, así que llega **adjunto** al chat. En el navegador de
+  escritorio esa API no acepta archivos: ahí descarga el PDF y abre el chat
+  con el resumen para que lo adjuntes con el clip.
 - **PDF de cotización y de despiece**, con tu logo, los datos de tu empresa y
   tus condiciones comerciales.
 - **Logo propio.** Se sube en Empresa (PNG, JPG, SVG o WebP), se reduce solo

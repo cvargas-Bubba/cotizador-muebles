@@ -187,7 +187,9 @@ MQ.pdf = (function () {
       const nom = (id) => (cat.tableros.find((t) => t.id === id) || {}).nombre;
       const cuerpo = nom(m.mat.cuerpo), frente = nom(m.mat.frente);
       /* la cubierta es una sola pieza: solo tiene sentido nombrar su tablero */
-      const mat = m.tipo === "cubierta"
+      const mat = MQ.calc.hayMadera(m)
+        ? "Armada con madera dimensionada"
+        : m.tipo === "cubierta"
         ? ((nom(MQ.calc.matCubierta(m)) || frente) ? "Tablero " + (nom(MQ.calc.matCubierta(m)) || frente) : "")
         : (cuerpo ? "Cuerpo " + cuerpo + (frente && frente !== cuerpo ? " · frentes " + frente : "") : "");
       const sub = [d, mat].filter(Boolean).join(". ");
@@ -300,11 +302,15 @@ MQ.pdf = (function () {
       doc.text(String(i + 1) + ". " + (m.nombre || MQ.tipo(m.tipo).nombre) + "  ·  " + medidas(m) + (m.cantidad > 1 ? "  ·  " + m.cantidad + " unidades" : ""), M, y);
       y += 5;
 
+      const n = Math.max(1, m.cantidad || 1);
+
+      if (c.piezas.length) {
       doc.setFont("helvetica", "bold").setFontSize(7.5).setTextColor.apply(doc, GRIS);
       doc.text("PIEZA", M, y); doc.text("CANT.", 72, y, { align: "right" });
       doc.text("LARGO", 92, y, { align: "right" }); doc.text("ANCHO", 112, y, { align: "right" });
       doc.text("TABLERO", 118, y); doc.text("CANTOS", ANCHO - M, y, { align: "right" });
       y += 2; doc.setDrawColor.apply(doc, LINEA).line(M, y, ANCHO - M, y); y += 4.5;
+      }
 
       c.piezas.forEach((p) => {
         y = salto(doc, y, 8, empresa, titulo, quote.numero);
@@ -319,6 +325,29 @@ MQ.pdf = (function () {
         doc.text(cantos, ANCHO - M, y, { align: "right" });
         y += 4.4;
       });
+
+      /* madera dimensionada y perfiles: se compran por metro */
+      if (c.lineales.length) {
+        y += 2;
+        doc.setFont("helvetica", "bold").setFontSize(7.5).setTextColor.apply(doc, GRIS);
+        doc.text("MADERA Y PERFILES", M, y); doc.text("PIEZAS", 72, y, { align: "right" });
+        doc.text("LARGO", 92, y, { align: "right" }); doc.text("TOTAL", ANCHO - M, y, { align: "right" });
+        y += 2; doc.setDrawColor.apply(doc, LINEA).line(M, y, ANCHO - M, y); y += 4.5;
+        c.lineales.forEach((l) => {
+          y = salto(doc, y, 8, empresa, titulo, quote.numero);
+          doc.setFont("helvetica", "normal").setFontSize(8.5).setTextColor.apply(doc, NEGRO);
+          doc.text(doc.splitTextToSize(l.nombre, 54)[0], M, y);
+          doc.text(String(l.cant * n), 72, y, { align: "right" });
+          doc.text(String(l.largo), 92, y, { align: "right" });
+          doc.text((l.metros * n).toFixed(2) + " m", ANCHO - M, y, { align: "right" });
+          y += 4.4;
+        });
+        if (c.cubiertaDeMadera) {
+          doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor.apply(doc, GRIS);
+          doc.text("La cubierta se arma con estas piezas: no lleva tablero.", M, y + 1);
+          y += 5;
+        }
+      }
       y += 5;
     });
 
@@ -339,6 +368,8 @@ MQ.pdf = (function () {
       y += 4.8;
     };
     L.tableros.forEach((t) => item(t.nombre, t.planchasEnteras + (t.planchasEnteras === 1 ? " plancha" : " planchas") + "  (" + t.m2.toFixed(2) + " m²)"));
+    L.maderas.forEach((l) => item(l.nombre, Math.ceil(l.metros) + " m  (" + l.piezas + (l.piezas === 1 ? " pieza)" : " piezas)")));
+    L.perfiles.forEach((l) => item(l.nombre, Math.ceil(l.metros) + " m  (" + l.piezas + (l.piezas === 1 ? " pieza)" : " piezas)")));
     L.cantos.forEach((c) => item(c.nombre, Math.ceil(c.ml) + " m"));
     L.herrajes.forEach((h) => item(h.nombre, Math.ceil(h.cant) + " " + h.unidad));
 
@@ -365,6 +396,13 @@ MQ.pdf = (function () {
     async descargarDespiece(quote, cat, empresa) {
       const doc = await conLogo(empresa, () => despiece(quote, cat, empresa));
       doc.save(nombreArchivo("Despiece", quote, (quote.cliente || {}).nombre));
+    },
+    /* El PDF como archivo, sin descargarlo: lo necesita el envío por WhatsApp,
+       que lo entrega a la hoja de compartir del sistema. */
+    async archivoCotizacion(quote, cat, empresa) {
+      const doc = await conLogo(empresa, () => cotizacion(quote, cat, empresa));
+      const nombre = nombreArchivo("Cotizacion", quote, (quote.cliente || {}).nombre);
+      return { blob: doc.output("blob"), nombre, guardar: () => doc.save(nombre) };
     }
   };
 })();

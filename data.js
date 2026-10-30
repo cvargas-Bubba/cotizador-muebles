@@ -24,6 +24,25 @@ MQ.DEFAULT_CATALOGO = {
     { id: "mad50", nombre: "Madera maciza 50 mm", espesor: 50, largo: 2400, ancho: 650, precio: 135000, macizo: true },
     { id: "mad30", nombre: "Madera maciza 30 mm", espesor: 30, largo: 2400, ancho: 650, precio: 89000, macizo: true }
   ],
+  /* Madera dimensionada seca y cepillada, por escuadría en pulgadas.
+     Precio por metro lineal: se ingresa el largo y la cantidad de piezas. */
+  escuadrias: [
+    { id: "m1x4", nombre: "Pino seco cepillado", esp: 1, anc: 4, precio: 1290 },
+    { id: "m1x6", nombre: "Pino seco cepillado", esp: 1, anc: 6, precio: 1890 },
+    { id: "m1x8", nombre: "Pino seco cepillado", esp: 1, anc: 8, precio: 2490 },
+    { id: "m2x2", nombre: "Pino seco cepillado", esp: 2, anc: 2, precio: 1490 },
+    { id: "m2x4", nombre: "Pino seco cepillado", esp: 2, anc: 4, precio: 2690 },
+    { id: "m2x6", nombre: "Pino seco cepillado", esp: 2, anc: 6, precio: 3890 },
+    { id: "m2x8", nombre: "Pino seco cepillado", esp: 2, anc: 8, precio: 5190 }
+  ],
+  /* Perfiles de fierro, también por metro lineal */
+  perfiles: [
+    { id: "f30", nombre: "Tubo cuadrado 30×30×2 mm", precio: 2690 },
+    { id: "f40", nombre: "Tubo cuadrado 40×40×2 mm", precio: 3490 },
+    { id: "f5020", nombre: "Tubo rectangular 50×20×2 mm", precio: 3190 },
+    { id: "fang", nombre: "Ángulo 40×40×3 mm", precio: 3890 },
+    { id: "fplat", nombre: "Pletina 38×3 mm", precio: 2290 }
+  ],
   /* Cantos: precio por metro lineal instalado */
   cantos: [
     { id: "fino", nombre: "Canto PVC 0,45 mm", precio: 190 },
@@ -113,7 +132,9 @@ MQ.DEFAULT_MATERIALES = { cuerpo: "mel18b", frente: "mel18m", trasera: "tras3", 
 MQ.nuevoMueble = function (tipoId) {
   const t = MQ.tipo(tipoId || "base");
   return Object.assign(
-    { id: MQ.uid(), tipo: t.id, nombre: "", cantidad: 1, instalar: true, mat: MQ.clone(MQ.DEFAULT_MATERIALES) },
+    /* lineales: piezas de madera dimensionada y perfiles de fierro que se
+       compran por metro, con su largo y cantidad */
+    { id: MQ.uid(), tipo: t.id, nombre: "", cantidad: 1, instalar: true, lineales: [], mat: MQ.clone(MQ.DEFAULT_MATERIALES) },
     MQ.clone(t.def)
   );
 };

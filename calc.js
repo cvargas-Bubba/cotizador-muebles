@@ -15,6 +15,25 @@ MQ.calc = (function () {
   const matCubierta = (m) => m.mat.cubierta || m.mat.frente;
   const canto = (cat, id) => cat.cantos.find((c) => c.id === id) || cat.cantos[0];
 
+  /* ---------- insumos lineales: madera dimensionada y perfiles ----------
+     Se compran por metro, no por plancha: en el mueble se anota la escuadría,
+     el largo de cada pieza y cuántas van. */
+  /* si el material fue borrado del catálogo se cae al primero de la lista,
+     para que el mueble siga costeando en vez de perder la pieza */
+  const escuadria = (cat, id) => (cat.escuadrias || []).find((x) => x.id === id) || (cat.escuadrias || [])[0];
+  const perfil = (cat, id) => (cat.perfiles || []).find((x) => x.id === id) || (cat.perfiles || [])[0];
+  const insumo = (cat, l) => (l.clase === "perfil" ? perfil(cat, l.matId) : escuadria(cat, l.matId));
+  /* la escuadría se nombra como se pide en barraca: 2×4" */
+  const nombreEscuadria = (e) => (e ? e.esp + "×" + e.anc + '"' + (e.nombre ? " " + e.nombre : "") : "");
+  const nombreLineal = (cat, l) => {
+    const it = insumo(cat, l);
+    if (!it) return "";
+    return l.clase === "perfil" ? it.nombre : nombreEscuadria(it);
+  };
+  /* Si el mueble lleva madera, la cubierta se arma con ella y no se cobra
+     tablero: el usuario fabrica el tablero, no lo compra. */
+  const hayMadera = (m) => (m.lineales || []).some((l) => l.clase === "madera" && l.largo > 0 && l.cant > 0);
+
   /* precio por m² prorrateado desde la plancha entera */
   function precioM2(cat, id) {
     const t = tablero(cat, id);
@@ -76,8 +95,11 @@ MQ.calc = (function () {
       });
     };
 
+    const cubiertaDeMadera = hayMadera(m);
+
     if (m.tipo === "cubierta") {
-      add("Cubierta", 1, A, P, matCubierta(m), "grueso", 1, 2);
+      /* armada con madera propia: el despiece son las piezas lineales */
+      if (!cubiertaDeMadera) add("Cubierta", 1, A, P, matCubierta(m), "grueso", 1, 2);
       return out;
     }
 
@@ -89,7 +111,7 @@ MQ.calc = (function () {
     if (usa("entrepanos")) add("Entrepaño", Math.max(0, Math.round(m.entrepanos)), A - 2 * e, P - RETIRO_ENTREP, m.mat.cuerpo, "fino", 1, 0);
     if (usa("trasera") && m.trasera) add("Trasera", 1, H, A, m.mat.trasera, null, 0, 0);
     if (usa("zocalo") && m.zocalo) add("Zócalo", 1, A, ALTO_ZOCALO, m.mat.cuerpo, "fino", 1, 0);
-    if (usa("cubierta") && m.cubierta) add("Cubierta", 1, A, P + 20, matCubierta(m), "grueso", 1, 2);
+    if (usa("cubierta") && m.cubierta && !cubiertaDeMadera) add("Cubierta", 1, A, P + 20, matCubierta(m), "grueso", 1, 2);
 
     /* los cajones en columna propia necesitan un separador vertical */
     if (colCaj) add("Separador vertical", 1, H - 2 * e, P, m.mat.cuerpo, "fino", 1, 0);
@@ -171,6 +193,28 @@ MQ.calc = (function () {
       return { id, nombre: c.nombre, ml: porCanto[id], precio: c.precio, total: porCanto[id] * c.precio };
     });
 
+    /* Piezas de madera y perfiles: metros por el precio del metro */
+    const detLineales = (m.lineales || []).map((l) => {
+      const it = insumo(cat, l);
+      if (!it) return null;
+      const cant = Math.max(0, Math.round(l.cant || 0));
+      const largo = Math.max(0, Math.round(l.largo || 0));
+      const metros = (largo / 1000) * cant;
+      return {
+        clase: l.clase, id: it.id, nombre: nombreLineal(cat, l),
+        largo, cant, metros, precio: it.precio, total: metros * it.precio
+      };
+    }).filter(Boolean);
+
+    /* Una cubierta armada con madera no deja tablero que procesar, pero sí una
+       superficie que cepillar, encolar y lijar: si no entrara acá, la mano de
+       obra del mesón quedaría en solo el armado. */
+    const t = MQ.tipo(m.tipo);
+    const llevaCubierta = m.tipo === "cubierta" || (t.partes.indexOf("cubierta") >= 0 && m.cubierta);
+    if (hayMadera(m) && llevaCubierta) {
+      m2Proceso += (Math.max(1, m.ancho) / 1000) * (Math.max(1, m.prof) / 1000);
+    }
+
     const mano = [];
     const mo = cat.mano;
     if (m2Proceso > 0 && mo.fabricacion) mano.push({ nombre: mo.fabricacion.nombre, detalle: m2Proceso.toFixed(2) + " m²", total: m2Proceso * mo.fabricacion.precio });
@@ -179,15 +223,17 @@ MQ.calc = (function () {
 
     const suma = (a) => a.reduce((s, x) => s + x.total, 0);
     const cTableros = suma(detTableros), cCantos = suma(detCantos), cHerrajes = suma(hz), cMano = suma(mano);
-    const directo = cTableros + cCantos + cHerrajes + cMano;
+    const cLineales = suma(detLineales);
+    const directo = cTableros + cCantos + cHerrajes + cMano + cLineales;
     const gastos = directo * MQ.num(p.gastos, 0) / 100;
     const margen = (directo + gastos) * MQ.num(p.margen, 0) / 100;
     const unitario = MQ.redondear(directo + gastos + margen, MQ.num(p.redondeo, 1));
 
     return {
       piezas: pz, herrajes: hz, mano, tableros: detTableros, cantos: detCantos,
+      lineales: detLineales, cubiertaDeMadera: hayMadera(m) && llevaCubierta,
       m2Proceso,
-      costos: { tableros: cTableros, cantos: cCantos, herrajes: cHerrajes, mano: cMano, directo, gastos, margen },
+      costos: { tableros: cTableros, cantos: cCantos, lineales: cLineales, herrajes: cHerrajes, mano: cMano, directo, gastos, margen },
       unitario,
       total: unitario * Math.max(1, Math.round(m.cantidad || 1))
     };
@@ -210,7 +256,7 @@ MQ.calc = (function () {
 
   /* ---------- lista de compra consolidada de toda la cotización ---------- */
   function listaCompra(quote, cat) {
-    const tabs = {}, cants = {}, herr = {};
+    const tabs = {}, cants = {}, herr = {}, lins = {};
     (quote.muebles || []).forEach((m) => {
       const n = Math.max(1, Math.round(m.cantidad || 1));
       const c = costear(m, cat);
@@ -226,13 +272,24 @@ MQ.calc = (function () {
         const g = herr[h.key] || (herr[h.key] = { nombre: h.nombre, unidad: h.unidad, cant: 0 });
         g.cant += h.cant * n;
       });
+      c.lineales.forEach((l) => {
+        const k = l.clase + ":" + l.id;
+        const g = lins[k] || (lins[k] = { clase: l.clase, id: l.id, nombre: l.nombre, metros: 0, piezas: 0 });
+        g.metros += l.metros * n; g.piezas += l.cant * n;
+      });
     });
+    const lineales = Object.keys(lins).map((k) => lins[k]);
     return {
       tableros: Object.keys(tabs).map((id) => Object.assign({ id, planchasEnteras: Math.ceil(tabs[id].planchas - 0.001) }, tabs[id])),
       cantos: Object.keys(cants).map((id) => Object.assign({ id }, cants[id])),
-      herrajes: Object.keys(herr).map((k) => Object.assign({ key: k }, herr[k]))
+      herrajes: Object.keys(herr).map((k) => Object.assign({ key: k }, herr[k])),
+      maderas: lineales.filter((l) => l.clase === "madera"),
+      perfiles: lineales.filter((l) => l.clase === "perfil")
     };
   }
 
-  return { piezas, herrajes, costear, totales, listaCompra, precioM2, geometria, matCubierta, tablero, ALTO_ZOCALO };
+  return {
+    piezas, herrajes, costear, totales, listaCompra, precioM2, geometria,
+    matCubierta, tablero, hayMadera, nombreEscuadria, nombreLineal, ALTO_ZOCALO
+  };
 })();
