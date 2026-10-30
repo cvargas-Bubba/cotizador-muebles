@@ -536,10 +536,24 @@
 
     /* croquis */
     croquis = MQ.croquis.montar($("crLienzo"), () => quote.croquis, () => S.saveDraft(quote));
+    const AYUDA = {
+      sel: "Haz clic en un trazo para seleccionarlo y arrástralo para moverlo. Doble clic edita el texto de una cota o de un rótulo.",
+      linea: "Arrastra para dibujar la línea.",
+      rect: "Arrastra para dibujar el rectángulo.",
+      rombo: "Arrastra para dibujar el rombo dentro de ese recuadro.",
+      poli: "Un clic por cada punto. Doble clic termina la figura; vuelve al primer punto para cerrarla.",
+      texto: "Haz clic donde quieras poner el rótulo.",
+      cota: "Arrastra de un extremo al otro. La medida se calcula sola, y con doble clic puedes escribirla tú."
+    };
     document.querySelectorAll(".tool").forEach((b) => b.addEventListener("click", () => {
       document.querySelectorAll(".tool").forEach((x) => x.classList.toggle("on", x === b));
       croquis.herramienta(b.dataset.tool);
+      $("crAyuda").textContent = AYUDA[b.dataset.tool] || "";
     }));
+    $("crAyuda").textContent = AYUDA.sel;
+    $("crEdit").addEventListener("click", () => {
+      if (!croquis.editarSeleccion()) MQ.toast("Selecciona una cota o un rótulo para editar su texto.");
+    });
     $("crEscala").addEventListener("input", () => {
       quote.croquis.escala = Math.max(1, Math.round(MQ.num($("crEscala").value, 100)));
       croquis.pintar(); S.saveDraft(quote);
@@ -554,6 +568,7 @@
     document.addEventListener("keydown", (ev) => {
       if ($("view-croquis").hidden) return;
       const enCampo = /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName);
+      if (!enCampo && (ev.key === "Enter" || ev.key === "Escape") && croquis.enCadena()) { ev.preventDefault(); croquis.cerrarCadena(); }
       if (!enCampo && (ev.key === "Delete" || ev.key === "Backspace")) { ev.preventDefault(); croquis.borrar(); }
       if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === "z") { ev.preventDefault(); croquis.deshacer(); }
     });

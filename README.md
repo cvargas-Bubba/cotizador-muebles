@@ -21,10 +21,12 @@ con despiece y lista de compra. Funciona en el navegador, sin servidor ni instal
 - **Hoja de esquemas.** El PDF de la cotización termina con el dibujo de cada
   mueble, acotado y con la medida de corte escrita en cada puerta y cajón.
 - **Croquis.** Un dibujo propio por cotización, hecho con líneas, rectángulos,
-  rótulos y cotas sobre una grilla con ajuste automático. Las cotas calculan
-  solas su medida a partir de la escala que definas para la grilla. Se guarda
-  como vectores, no como imagen, así que pesa unos pocos KB y sale nítido en
-  el PDF.
+  rombos, figuras de varios puntos, rótulos y cotas sobre una grilla con
+  ajuste automático. Las cotas calculan solas su medida a partir de la escala
+  de la grilla, y con doble clic puedes escribir la tuya cuando necesites la
+  medida real en vez de la del dibujo; si la borras, vuelve a calcularse sola.
+  Se guarda como vectores, no como imagen, así que pesa unos pocos KB y sale
+  nítido en el PDF.
 - **Historial** de cotizaciones, para reabrir, duplicar y seguir su estado.
 
 ## Cómo calcula el precio

@@ -185,10 +185,13 @@
         <button type="button" class="tool on" data-tool="sel" title="Seleccionar y mover">Seleccionar</button>
         <button type="button" class="tool" data-tool="linea" title="Línea recta">Línea</button>
         <button type="button" class="tool" data-tool="rect" title="Rectángulo">Rectángulo</button>
+        <button type="button" class="tool" data-tool="rombo" title="Rombo">Rombo</button>
+        <button type="button" class="tool" data-tool="poli" title="Figura de varios puntos">Multipunto</button>
         <button type="button" class="tool" data-tool="texto" title="Rótulo de texto">Texto</button>
         <button type="button" class="tool" data-tool="cota" title="Cota con medida">Cota</button>
       </div>
       <div class="tools-right">
+        <button class="btn btn-ghost btn-sm" id="crEdit">Editar texto</button>
         <button class="btn btn-ghost btn-sm" id="crUndo">Deshacer</button>
         <button class="btn btn-ghost btn-sm" id="crDel">Borrar</button>
         <button class="btn btn-ghost btn-sm" id="crClear">Limpiar</button>
@@ -201,7 +204,7 @@
           <div class="unit" data-unit="mm"><input class="input" id="crEscala" inputmode="numeric" value="100"></div>
         </div>
         <label class="check"><input type="checkbox" id="crSnap" checked><span>Ajustar a la grilla</span></label>
-        <span class="hint" id="crAyuda">Las cotas calculan su medida con esa escala.</span>
+        <span class="hint" id="crAyuda"></span>
       </div>
       <div class="croquis-lienzo" id="crLienzo"></div>
     </div>

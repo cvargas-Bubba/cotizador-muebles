@@ -100,19 +100,29 @@ MQ.draw = (function () {
     return { w: W, h: HV, formas };
   }
 
-  /* ---------- salida para la pantalla ---------- */
-  function svg(fig, etiqueta) {
-    const p = fig.formas.map((f) => {
+  /* ---------- salida para la pantalla ----------
+     `formas()` da solo el contenido, para poder actualizar un <svg> que ya
+     existe en vez de reemplazarlo: si el elemento se recrea entre dos clics,
+     el navegador no llega a emitir el doble clic. */
+  function formas(fig) {
+    return fig.formas.map((f) => {
       const n = (v) => (+v).toFixed(1);
       if (f.t === "rect") return `<rect x="${n(f.x)}" y="${n(f.y)}" width="${n(f.w)}" height="${n(f.h)}" class="${f.clase}"/>`;
       if (f.t === "linea") return `<line x1="${n(f.x1)}" y1="${n(f.y1)}" x2="${n(f.x2)}" y2="${n(f.y2)}" class="${f.clase}"/>`;
       if (f.t === "circulo") return `<circle cx="${n(f.cx)}" cy="${n(f.cy)}" r="${n(f.r)}" class="${f.clase}"/>`;
+      if (f.t === "poli") {
+        const pts = f.pts.map((p) => n(p.x) + "," + n(p.y)).join(" ");
+        return `<${f.cerrado ? "polygon" : "polyline"} points="${pts}" class="${f.clase}"/>`;
+      }
       const cls = f.clase + (f.anclaje === "fin" ? " der" : "");
       const rot = f.rot ? ` transform="rotate(${f.rot} ${n(f.x)} ${n(f.y)})"` : "";
       return `<text x="${n(f.x)}" y="${n(f.y)}" class="${cls}"${rot}>${esc(f.s)}</text>`;
     }).join("");
-    return `<svg viewBox="0 0 ${fig.w} ${fig.h}" role="img" aria-label="${esc(etiqueta || "Esquema frontal del mueble")}">${p}</svg>`;
   }
 
-  return { figura, svg, esquema: (m, cat) => svg(figura(m, cat)) };
+  function svg(fig, etiqueta) {
+    return `<svg viewBox="0 0 ${fig.w} ${fig.h}" role="img" aria-label="${esc(etiqueta || "Esquema frontal del mueble")}">${formas(fig)}</svg>`;
+  }
+
+  return { figura, svg, formas, esquema: (m, cat) => svg(figura(m, cat)) };
 })();

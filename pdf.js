@@ -41,6 +41,15 @@ MQ.pdf = (function () {
         if (e.borde) { doc.setDrawColor.apply(doc, e.borde); doc.setLineWidth(e.grosor); }
         const modo = e.relleno && e.borde ? "FD" : e.relleno ? "F" : "S";
         doc.rect(X(f.x), Y(f.y), f.w * s, f.h * s, modo);
+      } else if (f.t === "poli") {
+        doc.setDrawColor.apply(doc, e.borde || GRIS);
+        doc.setLineWidth(e.grosor || 0.3);
+        const v = f.pts;
+        const n = f.cerrado ? v.length : v.length - 1;
+        for (let i = 0; i < n; i++) {
+          const a = v[i], b = v[(i + 1) % v.length];
+          doc.line(X(a.x), Y(a.y), X(b.x), Y(b.y));
+        }
       } else if (f.t === "linea") {
         doc.setDrawColor.apply(doc, e.borde || GRIS);
         doc.setLineWidth(e.grosor || 0.3);
